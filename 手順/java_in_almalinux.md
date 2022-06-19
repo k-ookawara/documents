@@ -1,6 +1,17 @@
 # LinuxにJDKをダウンロードする
 
-1. AlmaLinuxサーバにログインして、以下のコマンドで`wget`をインストール。  
+1. AlmaLinuxサーバにログイン。
+
+### Windowsの場合：  
+  + teratermで接続する。  
+  ![picture 3](almalinux_install_image/17ebd5f9af4d7aa7151c24b07af6da50e9c3a92f8f575a4c920d9e094f060193.png)  
+
+### Macの場合  
+  + ターミナルから、`ssh -p 2222 root@localhost`で接続する。
+
+---
+
+1. 以下のコマンドで`wget`をインストール。  
   `yum -y install wget`
 
 1. [http://jdk.java.net/archive/]()にアクセス。今回は`17.0.2 (build 17.0.2+8)`の`Linux/x64`のtar.gzのアドレスをコピー
