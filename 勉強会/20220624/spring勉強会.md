@@ -559,6 +559,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
     compileOnly 'org.projectlombok:lombok'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
++   runtimeOnly 'mysql:mysql-connector-java'
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
@@ -1006,22 +1007,132 @@ public class BookSearchService {
 }
 ```
 
-`com.example.demo.repository.BookRepository`
-```java
-package com.example.demo.repository;
-
-import org.springframework.data.repository.CrudRepository;
-import org.springframework.stereotype.Repository;
-
-import com.example.demo.entity.Book;
-
-@Repository
-public interface BookRepository extends CrudRepository<Book, String>{
-
-}
-```
-
 [http://localhost:8080/book/list]()にアクセスしてみます。
 ![picture 11](image/8644e74dd39d92e4d387483c770d90df48388c6b4bf77e2b0b0f081ed2b03663.png)  
 
 > `No IMAGE`のファイルはこちら。[no_image.png](./no_image.png)
+
+# カスタムバリデーションを追加する
+
+蔵書登録でISBNの入力仕様を変更します。（本当に厳密にすると面倒なので少し緩くしてます）
+
++ ISBNは2006年12月31日までの旧規格(ISBN-10)と、2007年以降の現行規格(ISBN-13)が存在する。
++ 旧規格と現行規格はそれぞれ異なるコード体系のため、画面操作者に画面上で規格を選択させ、それに応じてコード体系のバリデーションを行う。
++ 旧規格と現行規格のコード体系は以下の通り。
+
+#### ___旧規格___
+4つのパートを並べた合計10桁のコード。  
+パートについては以下の通り。
++ グループ記号
+    + 1～5桁の数字
++ 出版者記号
+    + 2～7桁の数字
++ 書名記号
+    + 1～6桁の数字
++ チェックディジット
+    1. 数値の各桁に、上の桁から10～2の係数（ウエイト）を掛けます。
+    1. 各桁の結果の合計を求めます。
+    1. 合計を11で割り、余りを求めます。
+    1. この余りを11から引いたもの(11 - 余り)がチェックデジットとします。
+    1. また結果が10の場合にはチェックデジットは`X`になります。
+    > 例）ISBNが4-10-109205-□の場合の□(チェックディジット)を求める。  
+    > 4×10 + 1×9 + 0×8 + 1×7 + 0×6 + 9×5 + 2×4 + 0×3 + 5×2  
+    > = 40  +  9  +  0  +  7  +  0  +  45 +  8  +  0  +  10  
+    > = 119  
+    > 119 ÷ 11 = 10 あまり 9  
+    > 11 - 9 = 2  
+    > チェックディジットは 2
++ 各パートはハイフンで区切って入力させる。
+
+#### ___現行規格___
+5つのパートを並べた合計13桁のコード。  
+パートについては以下の通り。
++ 接頭記号
+    + `978`または`979`のいずれかである。
++ グループ記号
+    + 旧規格と同じ。
++ 出版者記号
+    + 旧規格と同じ。
++ 書名記号
+    + 旧規格と同じ。
++ チェックディジット
+    1. 数値の各桁に、下の桁から3・1・3・1・…の順番に係数を掛けます。
+    1. 各桁の結果の合計を求めます。
+    1. 合計を10で割り、余りを求めます。
+    1. この余りを 10 から引いたもの(10 - 余り)がチェックデジットです。
+    1. ただし余りが0の場合はチェックデジットも「0」になります。  
++ 各パートはハイフンで区切って入力させる。
+
+画面のISBNの入力フォームのイメージは以下の通り。
+![picture 2](image/eda6682e80aeb31df5170c7a81f7ec387404e6543bf60e1a62cd3387005fc0a9.png)  
+
+
+以下のように`ISBNコード規格`を定義します。
+```java
+package com.example.demo.model;
+
+import lombok.Getter;
+
+@Getter
+public enum IsbnCodeType {
+
+    /** ISBN-10 */
+    ISBN_10(1, "ISBN-10"),
+
+    /** ISBN-13 */
+    ISBN_13(2, "ISBN-13");
+    
+    private int id;
+
+    private String name;
+
+    private IsbnCodeType(int id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+}
+```
+
+`com.example.demo.model.BookRegister`でISBNコード規格のパラメータを受け取れるようにしてください。
+```diff
+public class BookRegister {
+
+    @NotEmpty(message = "蔵書名を入力してください")
+    @Size(max = 100, message = "蔵書は100文字以内で入力してください")
+    private String bookName;
+
+    @NotEmpty(message = "ISBNを入力してください")
+-   @Size(max = 17, message = "ISBNはハイフンを含めて17文字で入力してください")
+-   @Pattern(regexp = "(978|979)-[0-9]{1,5}-[0-9]{1,5}-[0-9]{1,5}-[0-9]", message = "ISBNの規格に則っていません")
+    private String isbn;
+
++   @NotNull(message = "ISBN規格を選択してください")
++   private IsbnCodeType isbnCodeType;
+```
+
+バリデータを実装します。
+```java
+package com.example.demo.validator;
+
+import org.springframework.stereotype.Component;
+import org.springframework.validation.Errors;
+import org.springframework.validation.Validator;
+
+@Component
+public class BookRegisterValidator implements Validator {
+
+    @Override
+    public boolean supports(Class<?> clazz) {
+        return BookRegisterValidator.class.equals(clazz);
+    }
+
+    @Override
+    public void validate(Object target, Errors errors) {
+        /* 
+         * ここにISBNを検証する処理を書いていく
+         * エラーの場合はこのようにエラーを登録する → errors.rejectValue("isbn", "エラーメッセージ");
+         * /
+    }
+
+}
+```
