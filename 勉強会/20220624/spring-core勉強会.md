@@ -764,7 +764,7 @@ public class BookRegister {
 
 +   @NotEmpty(message = "ISBNを入力してください")
 +   @Size(max = 13, message = "ISBNはハイフンを含めて17文字で入力してください")
-+   @Pattern(regexp = "(978|979)-[0-9]{1,5}-[0-9]{1,5}-[0-9]", message = "ISBNの規格に則っていません")
++   @Pattern(regexp = "(978|979)-[0-9]{1,5}-[0-9]{1,5}-[0-9]{1,5}-[0-9]", message = "ISBNの規格に則っていません")
     private String isbn;
 
 +   @NotEmpty(message =  "著者を入力してください")
@@ -815,4 +815,81 @@ public class BookRegister {
 ![picture 8](image/1d55450b4505e0d3b3bdddaeb8b13d1849043440abb732b49740bdb8bd938b07.png)  
 
 エラーメッセージを協調するため、画面を装飾します。
+※diffはしんどいので書けませんでした。
+```html
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+    integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+    crossorigin="anonymous">
+<link rel="stylesheet" th:href="@{/css/common.css}">
+<title>蔵書を登録する</title>
+<body>
+    <nav class="navbar navbar-dark" style="background: #2e3740">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#" th:href="@{/seller/register}">蔵書管理</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/book/register">蔵書登録</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/book/list">蔵書一覧</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <div class="container">
+        <h1>蔵書を登録する</h1>
+        <form action="/book/register" th:action=@{/book/register} method="post" th:object="${bookRegister}">
+            <ul class="alert alert-danger" role="alert" th:if="${#fields.hasErrors('*')}">
+                <li th:each="err : ${#fields.errors('*')}" th:text="${err}">
+            </ul>
+            <div class="mb-3">
+                <label for="bookName" class="form-label">蔵書名</label>
+                <input type="text" class="form-control" th:field="*{bookName}" th:value="*{bookName}">
+            </div>
+            <div class="mb-3">
+                <label for="isbn" class="form-label">ISBN</label>
+                <input type="text" class="form-control" th:field="*{isbn}">
+            </div>
+            <div class="mb-3">
+                <label for="author" class="form-label">著者</label>
+                <input type="text" class="form-control" th:field="*{author}">
+            </div>
+            <div class="mb-3">
+                <label for="description" class="form-label">蔵書の説明</label>
+                <textarea class="form-control" th:field="*{description}"></textarea>
+            </div>
+            <div class="mb-3">
+                <label for="publisher" class="form-label">出版社</label>
+                <input type="text" class="form-control" th:field="*{publisher}">
+            </div>
+            <div class="mb-3">
+                <label for="dateOfPublication" class="form-label">発行年月日</label>
+                <input type="date" class="form-control" th:field="*{dateOfPublication}">
+            </div>
+            <div  class="mb-3">
+                <input type="submit" class="btn btn-outline-primary" value="蔵書を登録する">
+            </div>
+        </form>
+    </div>
+    <script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+    crossorigin="anonymous"></script>
+</body>
+</html>
+```
+![picture 10](image/18d879c14c74a90a20ab7a4f758c5cbb3ed29d81f71472c89763806cb594b60c.png)  
+
+# 検索結果を一覧表示する
 
