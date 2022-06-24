@@ -893,3 +893,135 @@ public class BookRegister {
 
 # 検索結果を一覧表示する
 
+新規で蔵書一覧画面を作成します。
+`list.html`
+```html
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+    integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+    crossorigin="anonymous">
+<link rel="stylesheet" th:href="@{/css/common.css}">
+<title>蔵書一覧</title>
+<body>
+    <nav class="navbar navbar-dark" style="background: #2e3740">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#" th:href="@{/book/list}">蔵書管理</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/book/register">蔵書登録</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/book/list">蔵書一覧</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <div class="container">
+        <h1>蔵書一覧</h1>
+        <div class="list-group">
+          <div class="list-group-item" th:each="book : ${books}">
+            <div class="row">
+                <div class="col-2">
+                    <img class="img-fluid" alt="Book Image" th:src="@{/image/no_image.png}">
+                </div>
+                <div class="col-5">
+                    <a href="#" th:text="${book.bookName}"></a>
+                    <div class="row">
+                        <div class="col" th:text="${book.publisher}"></div>
+                        <div class="col" th:text="${book.author} + （著）"></div>
+                    </div>
+                    <div class="row" th:text="${book.dateOfPublication}"></div>
+                </div>
+                <div class="col-5" th:text="${book.description}"></div>
+            </div>
+          </div>
+        </div>
+    </div>
+    <script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+    crossorigin="anonymous"></script>
+</body>
+</html>
+```
+
+`com.example.demo.controller.BookSearchController`
+```java
+package com.example.demo.controller;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import com.example.demo.service.BookSearchService;
+
+import lombok.RequiredArgsConstructor;
+
+@Controller
+@RequestMapping("/book/list")
+@RequiredArgsConstructor
+public class BookSearchController {
+
+    private final BookSearchService searchService;
+
+    @GetMapping
+    public String search(Model model) {
+        model.addAttribute("books", searchService.search());
+        return "book/list";
+    }
+}
+```
+
+`com.example.demo.service.BookSearchService`
+```java
+package com.example.demo.service;
+
+import org.springframework.stereotype.Service;
+
+import com.example.demo.entity.Book;
+import com.example.demo.repository.BookRepository;
+
+import lombok.RequiredArgsConstructor;
+
+@Service
+@RequiredArgsConstructor
+public class BookSearchService {
+
+    private final BookRepository bookRepository;
+
+    public Iterable<Book> search() {
+        return bookRepository.findAll();
+    }
+}
+```
+
+`com.example.demo.repository.BookRepository`
+```java
+package com.example.demo.repository;
+
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Repository;
+
+import com.example.demo.entity.Book;
+
+@Repository
+public interface BookRepository extends CrudRepository<Book, String>{
+
+}
+```
+
+[http://localhost:8080/book/list]()にアクセスしてみます。
+![picture 11](image/8644e74dd39d92e4d387483c770d90df48388c6b4bf77e2b0b0f081ed2b03663.png)  
+
+> `No IMAGE`のファイルはこちら。[no_image.png](./no_image.png)
