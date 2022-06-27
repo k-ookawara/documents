@@ -1016,9 +1016,11 @@ public class BookSearchService {
 
 蔵書登録でISBNの入力仕様を変更します。（本当に厳密にすると面倒なので少し緩くしてます）
 
+#### 概要
 + ISBNは2006年12月31日までの旧規格(ISBN-10)と、2007年以降の現行規格(ISBN-13)が存在する。
 + 旧規格と現行規格はそれぞれ異なるコード体系のため、画面操作者に画面上で規格を選択させ、それに応じてコード体系のバリデーションを行う。
-+ 旧規格と現行規格のコード体系は以下の通り。
+
+旧規格と現行規格のコード体系は以下の通り。  
 
 #### ___旧規格___
 4つのパートを並べた合計10桁のコード。  
@@ -1064,6 +1066,8 @@ public class BookSearchService {
 + 各パートはハイフンで区切って入力させる。
 
 画面のISBNの入力フォームのイメージは以下の通り。
++ ISBNはパート毎にハイフンで区切りでの入力が必要です。
++ ISBNの入力フォームの右隣に規格を選択するセレクトボックスを表示します。
 ![picture 2](image/eda6682e80aeb31df5170c7a81f7ec387404e6543bf60e1a62cd3387005fc0a9.png)  
 
 
@@ -1073,6 +1077,9 @@ package com.example.demo.model;
 
 import lombok.Getter;
 
+/**
+ * ISBNコード規格
+ */
 @Getter
 public enum IsbnCodeType {
 
@@ -1089,6 +1096,15 @@ public enum IsbnCodeType {
     private IsbnCodeType(int id, String name) {
         this.id = id;
         this.name = name;
+    }
+
+    public static IsbnCodeType lookup(int id) {
+        for (IsbnCodeType t : values()) {
+            if (t.id == id) {
+                return t;
+            }
+        }
+        return null;
     }
 }
 ```
@@ -1110,6 +1126,28 @@ public class BookRegister {
 +   private IsbnCodeType isbnCodeType;
 ```
 
+リクエストパラメータから`IsbnCodeType`型に変換するためのコンバータを作成します。
+```java
+package com.example.demo.converter;
+
+import org.springframework.core.convert.converter.Converter;
+import org.springframework.stereotype.Component;
+
+import com.example.demo.model.IsbnCodeType;
+
+@Component
+public class StringToIsbnCodeTypeConverter implements Converter<String, IsbnCodeType>{
+
+    @Override
+    public IsbnCodeType convert(String source) {
+        if (source == null) {
+            throw new IllegalArgumentException("ISBN規格の変換に失敗しました");
+        }
+        return IsbnCodeType.lookup(Integer.parseInt(source));
+    }
+}
+```
+
 バリデータを実装します。
 ```java
 package com.example.demo.validator;
@@ -1123,7 +1161,7 @@ public class BookRegisterValidator implements Validator {
 
     @Override
     public boolean supports(Class<?> clazz) {
-        return BookRegisterValidator.class.equals(clazz);
+        return BookRegister.class.equals(clazz);
     }
 
     @Override
@@ -1136,3 +1174,13 @@ public class BookRegisterValidator implements Validator {
 
 }
 ```
+`com.example.demo.controller.BookRegisterController`に以下のフィールドとメソッドを追加。
+```java
+private final BookRegisterValidator bookRegisterValidator;
+
+@InitBinder
+public void initBinder(WebDataBinder binder) {
+    binder.addValidators(bookRegisterValidator);
+}
+```
+
