@@ -1,6 +1,6 @@
 # 勉強会資料へのリンク
 
-# 2022/6/27 勉強会
+# 2022/6/24 勉強会
 #### 資料へのリンク
 [https://github.com/k-ookawara/documents/blob/main/%E5%8B%89%E5%BC%B7%E4%BC%9A/20220624/spring%E5%8B%89%E5%BC%B7%E4%BC%9A.md]()
 #### 内容
