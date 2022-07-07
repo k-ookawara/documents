@@ -241,7 +241,7 @@ public class SampleController {
 
     @GetMapping
     public ResponseEntity<String> get() {
-        return new ResponseEntity<String>(sampleService.hello(), HttpStatus.OK);
++       return new ResponseEntity<String>(sampleService.hello(), HttpStatus.OK);
     }
 }
 
